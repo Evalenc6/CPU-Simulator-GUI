@@ -74,5 +74,10 @@ namespace CpuSchedulingWinForms
         {
 
         }
+
+        private void btnSRTF_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

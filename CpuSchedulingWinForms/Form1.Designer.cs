@@ -35,6 +35,8 @@
             this.button2 = new System.Windows.Forms.Button();
             this.btnPriority = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
+            this.btnSRTF = new System.Windows.Forms.Button();
+            this.btnMLQ = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // labelProcess
@@ -60,7 +62,7 @@
             // 
             this.fcfs.Cursor = System.Windows.Forms.Cursors.Hand;
             this.fcfs.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.fcfs.Location = new System.Drawing.Point(12, 138);
+            this.fcfs.Location = new System.Drawing.Point(12, 100);
             this.fcfs.Name = "fcfs";
             this.fcfs.Size = new System.Drawing.Size(129, 55);
             this.fcfs.TabIndex = 2;
@@ -72,7 +74,7 @@
             // 
             this.button2.Cursor = System.Windows.Forms.Cursors.Hand;
             this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.button2.Location = new System.Drawing.Point(159, 138);
+            this.button2.Location = new System.Drawing.Point(160, 100);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(134, 55);
             this.button2.TabIndex = 3;
@@ -84,7 +86,7 @@
             // 
             this.btnPriority.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnPriority.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnPriority.Location = new System.Drawing.Point(310, 138);
+            this.btnPriority.Location = new System.Drawing.Point(312, 100);
             this.btnPriority.Name = "btnPriority";
             this.btnPriority.Size = new System.Drawing.Size(137, 55);
             this.btnPriority.TabIndex = 4;
@@ -104,6 +106,29 @@
             this.label1.Text = "Restart Application";
             this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
+            // btnSRTF
+            // 
+            this.btnSRTF.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnSRTF.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnSRTF.Location = new System.Drawing.Point(12, 164);
+            this.btnSRTF.Name = "btnSRTF";
+            this.btnSRTF.Size = new System.Drawing.Size(129, 55);
+            this.btnSRTF.TabIndex = 6;
+            this.btnSRTF.Text = "SRTF";
+            this.btnSRTF.UseVisualStyleBackColor = true;
+            this.btnSRTF.Click += new System.EventHandler(this.btnSRTF_Click);
+            // 
+            // btnMLQ
+            // 
+            this.btnMLQ.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnMLQ.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnMLQ.Location = new System.Drawing.Point(160, 164);
+            this.btnMLQ.Name = "btnMLQ";
+            this.btnMLQ.Size = new System.Drawing.Size(129, 55);
+            this.btnMLQ.TabIndex = 7;
+            this.btnMLQ.Text = "MLQ";
+            this.btnMLQ.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -111,6 +136,8 @@
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(461, 228);
+            this.Controls.Add(this.btnMLQ);
+            this.Controls.Add(this.btnSRTF);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btnPriority);
             this.Controls.Add(this.button2);
@@ -136,6 +163,8 @@
         private System.Windows.Forms.Button btnPriority;
         private System.Windows.Forms.Label label1;
         public System.Windows.Forms.TextBox txtProcess;
+        private System.Windows.Forms.Button btnSRTF;
+        private System.Windows.Forms.Button btnMLQ;
     }
 }
 

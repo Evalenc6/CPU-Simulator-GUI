@@ -359,5 +359,47 @@ namespace CpuSchedulingWinForms
         {
             this.txtCodeInput.Clear();
         }
+
+        private void btnSRTF_Click_1(object sender, EventArgs e)
+        {
+            if (txtProcess.Text != "")
+            {
+                Algorithms.srtfAlgorithm(txtProcess.Text);
+                // Optional: update listView1 if needed
+            }
+            else
+            {
+                MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.Focus();
+            }
+
+        }
+
+        private void btnMLQ_Click(object sender, EventArgs e)
+        {
+            if (txtProcess.Text != "")
+            {
+                Algorithms.mlqAlgorithm(txtProcess.Text);
+                // Optional: update listView1 if needed
+            }
+            else
+            {
+                MessageBox.Show("Enter number of processes", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtProcess.Focus();
+            }
+        }
+
+        private void btnSRTFTest_Click(object sender, EventArgs e)
+        {
+            SchedulerTester.RunComparison(20);   // Small load
+            SchedulerTester.RunComparison(60);  // Medium load
+            SchedulerTester.RunComparison(160);  // Larger load
+            SchedulerTester.RunComparison(250);  // Big load
+        }
+
+        private void btnMLQTest_Click(object sender, EventArgs e)
+        {
+            SchedulerTester.RunComparison(1000);
+        }
     }
 }

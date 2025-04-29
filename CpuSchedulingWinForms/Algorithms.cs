@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,324 @@ namespace CpuSchedulingWinForms
 {
     public static class Algorithms
     {
+        /*Imma add these new algorithms at the top 
+  starting with Shortest Remaining time first 
+  then multi-level queue
+
+
+  Shortest Remaining Time First:
+    Preemptive version of the SRTF where the process
+    with the remaining burst time left is ran
+  Multilevel Queue:
+    Processes are perminently assigned to queues based on
+    their priority and each queue has its own scheduling 
+    method and there is no movement between the queues. 
+    Q1 sytem process (higher prio) | Q2 user processes (lower prio)
+*/
+        public static SimulationResult RunSRTFSimulation(List<Process> processes)
+        {
+            int n = processes.Count;
+            int completed = 0, currentTime = 0;
+            bool foundProcess = false;
+
+            foreach (var p in processes)
+                p.RemainingTime = p.BurstTime; // Reset RemainingTime
+
+            double totalWaitingTime = 0, totalTurnaroundTime = 0, totalResponseTime = 0;
+
+            while (completed != n)
+            {
+                int minRemainingTime = int.MaxValue;
+                int shortest = -1;
+                foundProcess = false;
+
+                for (int i = 0; i < n; i++)
+                {
+                    if (processes[i].ArrivalTime <= currentTime &&
+                        processes[i].RemainingTime > 0 &&
+                        processes[i].RemainingTime < minRemainingTime)
+                    {
+                        minRemainingTime = processes[i].RemainingTime;
+                        shortest = i;
+                        foundProcess = true;
+                    }
+                }
+
+                if (!foundProcess)
+                {
+                    currentTime++;
+                    continue;
+                }
+
+                processes[shortest].RemainingTime--;
+
+                if (processes[shortest].StartTime == -1)
+                {
+                    processes[shortest].StartTime = currentTime;
+                }
+
+                if (processes[shortest].RemainingTime == 0)
+                {
+                    completed++;
+                    processes[shortest].CompletionTime = currentTime + 1;
+                    processes[shortest].TurnaroundTime = processes[shortest].CompletionTime - processes[shortest].ArrivalTime;
+                    processes[shortest].WaitingTime = processes[shortest].TurnaroundTime - processes[shortest].BurstTime;
+                }
+
+                currentTime++;
+            }
+
+            foreach (var p in processes)
+            {
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+                totalResponseTime += p.StartTime - p.ArrivalTime;
+            }
+
+            SimulationResult result = new SimulationResult
+            {
+                AWT = totalWaitingTime / n,
+                ATT = totalTurnaroundTime / n,
+                ResponseTime = totalResponseTime / n,
+                CPUUtilization = (double)(currentTime - processes.Sum(p => p.ArrivalTime)) / currentTime * 100,
+                Throughput = (double)n / currentTime
+            };
+
+            return result;
+        }
+        public static SimulationResult RunMLQSimulation(List<Process> processes)
+        {
+            int n = processes.Count;
+
+            List<Process> systemQueue = processes.Where(p => p.Priority <= 4).OrderBy(p => p.ArrivalTime).ToList();
+            List<Process> userQueue = processes.Where(p => p.Priority > 4).OrderBy(p => p.ArrivalTime).ToList();
+
+            List<Process> allProcesses = new List<Process>();
+            allProcesses.AddRange(systemQueue);
+            allProcesses.AddRange(userQueue);
+
+            int currentTime = 0;
+            double totalWaitingTime = 0, totalTurnaroundTime = 0, totalResponseTime = 0;
+
+            foreach (var p in allProcesses)
+            {
+                if (currentTime < p.ArrivalTime)
+                {
+                    currentTime = p.ArrivalTime;
+                }
+
+                p.StartTime = currentTime;
+                p.CompletionTime = currentTime + p.BurstTime;
+                p.TurnaroundTime = p.CompletionTime - p.ArrivalTime;
+                p.WaitingTime = p.StartTime - p.ArrivalTime;
+
+                currentTime = p.CompletionTime;
+
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+                totalResponseTime += p.StartTime - p.ArrivalTime;
+            }
+
+            SimulationResult result = new SimulationResult
+            {
+                AWT = totalWaitingTime / n,
+                ATT = totalTurnaroundTime / n,
+                ResponseTime = totalResponseTime / n,
+                CPUUtilization = (double)(currentTime - processes.Min(p => p.ArrivalTime)) / currentTime * 100,
+                Throughput = (double)n / currentTime
+            };
+
+            return result;
+        }
+
+        public static void srtfAlgorithm(string userInput)
+        {
+            int np = Convert.ToInt16(userInput);
+            List<Process> process = new List<Process>();
+
+            for (int i = 0; i < np; i++)
+            {
+                string arrivalInput = Microsoft.VisualBasic.Interaction.InputBox(
+                    $"Enter arrival time for process {i + 1}:",
+                    "Arrival Time", "", -1, -1);
+                string burstInput = Microsoft.VisualBasic.Interaction.InputBox(
+                    $"Enter burst time for Process {i + 1}:",
+                    "Burst Time", "", -1, -1);
+
+
+                int arrivalTime = Convert.ToInt32(arrivalInput);
+                int burstTime = Convert.ToInt32(burstInput);
+                process.Add(new Process(i + 1, arrivalTime, burstTime));
+            }
+            int completed = 0, currentTime = 0, minRemainingTime = int.MaxValue, shortest = -1;
+            bool foundProcess = false;
+
+            while (completed != np)
+            {
+                minRemainingTime = int.MaxValue;  // reset for each time unit
+                foundProcess = false;
+
+                for (int i = 0; i < np; i++)
+                {
+                    if (process[i].ArrivalTime <= currentTime && process[i].RemainingTime > 0 && process[i].RemainingTime < minRemainingTime)
+                    {
+                        minRemainingTime = process[i].RemainingTime;
+                        shortest = i;
+                        foundProcess = true;
+                    }
+                }
+                if (!foundProcess)
+                {
+                    currentTime++;
+                    continue;
+                }
+                Console.WriteLine($"Time {currentTime}: Running P{process[shortest].ProcessId}");
+
+
+                process[shortest].RemainingTime--;
+
+                if (process[shortest].StartTime == -1)
+                {
+                    process[shortest].StartTime = currentTime;
+                }
+
+                minRemainingTime = process[shortest].RemainingTime == 0 ? int.MaxValue : process[shortest].RemainingTime;
+                if (process[shortest].RemainingTime == 0)
+                {
+                    completed++;
+                    process[shortest].CompletionTime = currentTime + 1;
+                    process[shortest].TurnaroundTime = process[shortest].CompletionTime - process[shortest].ArrivalTime;
+                    process[shortest].WaitingTime = process[shortest].TurnaroundTime - process[shortest].BurstTime;
+
+                }
+
+                currentTime++;
+                foundProcess = false;
+            }
+
+            double totalWaitingTime = 0, totalTurnaroundTime = 0, totalResponseTime = 0;
+            foreach (var p in process)
+            {
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+                totalResponseTime += p.StartTime - p.ArrivalTime; // Response Time = Start Time - Arrival Time
+            }
+
+            double avgWaitingTime = totalWaitingTime / np;
+            double avgTurnaroundTime = totalTurnaroundTime / np;
+            double avgResponseTime = totalResponseTime / np;
+
+            MessageBox.Show($"[SRTF Scheduling]\n" +
+                            $"Average Waiting Time: {avgWaitingTime:F2} units\n" +
+                            $"Average Turnaround Time: {avgTurnaroundTime:F2} units\n" +
+                            $"Average Response Time: {avgResponseTime:F2} units",
+                            "SRTF Results", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+        }
+
+        public static void mlqAlgorithm(string userInput)
+        {
+            int np = Convert.ToInt16(userInput);
+            List<Process> systemQueue = new List<Process>(); // High priority for system
+            List<Process> userQueue = new List<Process>();   // Low priority for user
+
+            // Input arrival, burst, and priority
+            for (int i = 0; i < np; i++)
+            {
+                string arrivalInput = Microsoft.VisualBasic.Interaction.InputBox(
+                    $"Enter arrival time for process {i + 1}:",
+                    "Arrival Time", "", -1, -1);
+
+                string burstInput = Microsoft.VisualBasic.Interaction.InputBox(
+                    $"Enter burst time for process {i + 1}:",
+                    "Burst Time", "", -1, -1);
+
+                string priorityInput = Microsoft.VisualBasic.Interaction.InputBox(
+                    $"Enter priority (0-9) for process {i + 1}:\n(0 = highest, 9 = lowest)",
+                    "Priority", "", -1, -1);
+
+                int arrivalTime = Convert.ToInt32(arrivalInput);
+                int burstTime = Convert.ToInt32(burstInput);
+                int priority = Convert.ToInt32(priorityInput);
+
+                if (priority <= 4)
+                    systemQueue.Add(new Process(i + 1, arrivalTime, burstTime, priority, 0)); // Queue 0
+                else
+                    userQueue.Add(new Process(i + 1, arrivalTime, burstTime, priority, 1));    // Queue 1
+            }
+
+            List<Process> allProcesses = new List<Process>();
+            allProcesses.AddRange(systemQueue.OrderBy(p => p.ArrivalTime));
+            allProcesses.AddRange(userQueue.OrderBy(p => p.ArrivalTime));
+
+            int currentTime = 0;
+            double totalWaitingTime = 0, totalTurnaroundTime = 0;
+
+            foreach (var p in allProcesses)
+            {
+                if (currentTime < p.ArrivalTime)
+                {
+                    currentTime = p.ArrivalTime;
+                }
+
+                p.StartTime = currentTime;
+                p.CompletionTime = currentTime + p.BurstTime;
+                p.TurnaroundTime = p.CompletionTime - p.ArrivalTime;
+                p.WaitingTime = p.StartTime - p.ArrivalTime;
+
+                currentTime = p.CompletionTime;
+
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+            }
+
+            double avgWaitingTime = totalWaitingTime / np;
+            double avgTurnaroundTime = totalTurnaroundTime / np;
+
+            MessageBox.Show($"[MLQ Scheduling]\n" +
+                            $"Average Waiting Time: {avgWaitingTime:F2} units\n" +
+                            $"Average Turnaround Time: {avgTurnaroundTime:F2} units",
+                            "MLQ Results", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        public static SimulationResult RunFCFSSimulation(List<Process> processes)
+        {
+            int n = processes.Count;
+            processes = processes.OrderBy(p => p.ArrivalTime).ToList();
+
+            int currentTime = 0;
+            double totalWaitingTime = 0, totalTurnaroundTime = 0, totalResponseTime = 0;
+
+            foreach (var p in processes)
+            {
+                if (currentTime < p.ArrivalTime)
+                {
+                    currentTime = p.ArrivalTime;
+                }
+
+                p.StartTime = currentTime;
+                p.CompletionTime = currentTime + p.BurstTime;
+                p.TurnaroundTime = p.CompletionTime - p.ArrivalTime;
+                p.WaitingTime = p.StartTime - p.ArrivalTime;
+
+                currentTime = p.CompletionTime;
+
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+                totalResponseTime += p.StartTime - p.ArrivalTime;
+            }
+
+            return new SimulationResult
+            {
+                AWT = totalWaitingTime / n,
+                ATT = totalTurnaroundTime / n,
+                ResponseTime = totalResponseTime / n,
+                CPUUtilization = (double)(currentTime - processes.Min(p => p.ArrivalTime)) / currentTime * 100,
+                Throughput = (double)n / currentTime
+            };
+        }
+
+
         public static void fcfsAlgorithm(string userInput)
         {
             int np = Convert.ToInt16(userInput);
@@ -67,6 +386,43 @@ namespace CpuSchedulingWinForms
                 //frm.ShowDialog();
             }
         }
+        public static SimulationResult RunSJFSimulation(List<Process> processes)
+        {
+            int n = processes.Count;
+            processes = processes.OrderBy(p => p.BurstTime).ThenBy(p => p.ArrivalTime).ToList();
+
+            int currentTime = 0;
+            double totalWaitingTime = 0, totalTurnaroundTime = 0, totalResponseTime = 0;
+
+            foreach (var p in processes)
+            {
+                if (currentTime < p.ArrivalTime)
+                {
+                    currentTime = p.ArrivalTime;
+                }
+
+                p.StartTime = currentTime;
+                p.CompletionTime = currentTime + p.BurstTime;
+                p.TurnaroundTime = p.CompletionTime - p.ArrivalTime;
+                p.WaitingTime = p.StartTime - p.ArrivalTime;
+
+                currentTime = p.CompletionTime;
+
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+                totalResponseTime += p.StartTime - p.ArrivalTime;
+            }
+
+            return new SimulationResult
+            {
+                AWT = totalWaitingTime / n,
+                ATT = totalTurnaroundTime / n,
+                ResponseTime = totalResponseTime / n,
+                CPUUtilization = (double)(currentTime - processes.Min(p => p.ArrivalTime)) / currentTime * 100,
+                Throughput = (double)n / currentTime
+            };
+        }
+
 
         public static void sjfAlgorithm(string userInput)
         {
@@ -149,6 +505,42 @@ namespace CpuSchedulingWinForms
                 }
                 MessageBox.Show("Average waiting time for " + np + " processes" + " = " + (awt = twt / np) + " sec(s)", "Average waiting time", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+        public static SimulationResult RunPrioritySimulation(List<Process> processes)
+        {
+            int n = processes.Count;
+            processes = processes.OrderBy(p => p.Priority).ThenBy(p => p.ArrivalTime).ToList();
+
+            int currentTime = 0;
+            double totalWaitingTime = 0, totalTurnaroundTime = 0, totalResponseTime = 0;
+
+            foreach (var p in processes)
+            {
+                if (currentTime < p.ArrivalTime)
+                {
+                    currentTime = p.ArrivalTime;
+                }
+
+                p.StartTime = currentTime;
+                p.CompletionTime = currentTime + p.BurstTime;
+                p.TurnaroundTime = p.CompletionTime - p.ArrivalTime;
+                p.WaitingTime = p.StartTime - p.ArrivalTime;
+
+                currentTime = p.CompletionTime;
+
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+                totalResponseTime += p.StartTime - p.ArrivalTime;
+            }
+
+            return new SimulationResult
+            {
+                AWT = totalWaitingTime / n,
+                ATT = totalTurnaroundTime / n,
+                ResponseTime = totalResponseTime / n,
+                CPUUtilization = (double)(currentTime - processes.Min(p => p.ArrivalTime)) / currentTime * 100,
+                Throughput = (double)n / currentTime
+            };
         }
 
         public static void priorityAlgorithm(string userInput)
@@ -251,6 +643,64 @@ namespace CpuSchedulingWinForms
             {
                 //this.Hide();
             }
+        }
+        public static SimulationResult RunRoundRobinSimulation(List<Process> processes, int timeQuantum = 2)
+        {
+            int n = processes.Count;
+            foreach (var p in processes)
+            {
+                p.RemainingTime = p.BurstTime; // Reset remaining time
+            }
+
+            int currentTime = 0;
+            double totalWaitingTime = 0, totalTurnaroundTime = 0, totalResponseTime = 0;
+            Queue<Process> queue = new Queue<Process>(processes.OrderBy(p => p.ArrivalTime));
+
+            while (queue.Count > 0)
+            {
+                Process current = queue.Dequeue();
+
+                if (current.ArrivalTime > currentTime)
+                {
+                    currentTime = current.ArrivalTime;
+                }
+
+                if (current.StartTime == -1)
+                {
+                    current.StartTime = currentTime;
+                }
+
+                if (current.RemainingTime <= timeQuantum)
+                {
+                    currentTime += current.RemainingTime;
+                    current.RemainingTime = 0;
+                    current.CompletionTime = currentTime;
+                    current.TurnaroundTime = current.CompletionTime - current.ArrivalTime;
+                    current.WaitingTime = current.TurnaroundTime - current.BurstTime;
+                }
+                else
+                {
+                    currentTime += timeQuantum;
+                    current.RemainingTime -= timeQuantum;
+                    queue.Enqueue(current);
+                }
+            }
+
+            foreach (var p in processes)
+            {
+                totalWaitingTime += p.WaitingTime;
+                totalTurnaroundTime += p.TurnaroundTime;
+                totalResponseTime += p.StartTime - p.ArrivalTime;
+            }
+
+            return new SimulationResult
+            {
+                AWT = totalWaitingTime / n,
+                ATT = totalTurnaroundTime / n,
+                ResponseTime = totalResponseTime / n,
+                CPUUtilization = (double)(currentTime - processes.Min(p => p.ArrivalTime)) / currentTime * 100,
+                Throughput = (double)n / currentTime
+            };
         }
 
         public static void roundRobinAlgorithm(string userInput)
